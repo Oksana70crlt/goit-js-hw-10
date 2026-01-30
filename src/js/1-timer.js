@@ -1,4 +1,3 @@
-
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 
@@ -21,17 +20,19 @@ refs.startBtn.disabled = true;
 //змінна для збереження вибраної дати користувачем
 let userSelectedDate = null;
 
+// оголошення timerId у зовнішній області видимості
+let timerId = null;
 
 const options = {
   enableTime: true,           //увімкнення вибору часу
   time_24hr: true,            //24-годинний формат часу
   defaultDate: new Date(),    //встановлення поточної дати за замовчуванням
   minuteIncrement: 1,         //крок збільшення хвилин
-  
+
   onClose(selectedDates) {    //функція, що виконується при закритті календаря
     const now = new Date();
     const selectedDate = selectedDates[0];
-    
+
     // Якщо дата не в майбутньому - показуємо повідомлення і блокуємо кнопку
     if (selectedDate <= now) {
       userSelectedDate = null;
@@ -56,15 +57,21 @@ const options = {
   },
 };
 
-//Ініціалізація flatpickr на елементі input з вказаними опціями   
+//ініціалізація flatpickr на елементі input з вказаними опціями
 flatpickr(refs.input, options);
 
 //обробник кліку по кнопці "Start"
 refs.startBtn.addEventListener("click", onStart);
-function onStart() {
 
+function onStart() {
   //запобігаємо запуск таймера, якщо дата не вибрана
   if (!userSelectedDate) return;
+
+  // очищаємо попередній інтервал, якщо такий є
+  if (timerId) {
+    clearInterval(timerId);
+    timerId = null;
+  }
 
   //блокуємо кнопку "Start" і поле вводу після запуску таймера
   refs.startBtn.disabled = true;
@@ -73,9 +80,8 @@ function onStart() {
   // показуємо актуальний залишок часу (без очікування 1 секунди)
   updateTimer(userSelectedDate - new Date());
 
-  // Запускаємо інтервал
+  // запускаємо інтервал
   timerId = setInterval(() => {
-   
     const delta = userSelectedDate - new Date();
 
     if (delta <= 0) {
@@ -85,8 +91,8 @@ function onStart() {
 
       // встановлюємо всі значення таймера в 0
       setTimerValues({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-      
-      refs.input.disabled = false;    // розблоковуємо поле вводу дати      
+
+      refs.input.disabled = false;    // розблоковуємо поле вводу дати
       userSelectedDate = null;        // скидаємо вибрану дату
       refs.startBtn.disabled = true;  // блокуємо кнопку "Start" до нового вибору дати
 
@@ -105,7 +111,7 @@ function updateTimer(ms) {
 
 // оновлення в DOM з форматуванням
 function setTimerValues({ days, hours, minutes, seconds }) {
-  refs.days.textContent = String(days); // дні можуть бути > 2 цифр
+  refs.days.textContent = addLeadingZero(days);
   refs.hours.textContent = addLeadingZero(hours);
   refs.minutes.textContent = addLeadingZero(minutes);
   refs.seconds.textContent = addLeadingZero(seconds);
